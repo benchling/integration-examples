@@ -8,7 +8,7 @@ This script demonstrates how to upload results in to Benchling from a CSV file. 
 
 # Prerequisites
 
-This script requires the Results module. To define the type of data to upload, you must configure a **result schema** before running the script. In addition, to group the uploaded results together, you need to configure a **run schema**. Here's now:
+This script requires the Results application. To define the type of data to upload, you must configure a **result schema** before running the script. In addition, to group the uploaded results together, you need to configure a **run schema**. Here's now:
 
 - First, [configure the run schema](https://help.benchling.com/results-enterprise/configuration/configure-a-run-schema). You can leave the fields empty (`"fields": []`)
 - The run schema page should have a URL like https://example.benchling.com/your_username/assay-schemas/runs/assaysch_i2sX8NGy. Copy the last part of the URL, e.g. `assaysch_i2sX8NGy`, and write it down as the **run schema ID**. You'll need this to configure the result schema and run the script.
@@ -86,15 +86,7 @@ This script requires the Results module. To define the type of data to upload, y
 
 # How to run the script
 
-- Ask Benchling support to enable API access on your account
-- Click on the icon at the bottom left corner of the screen:
-
-![Menu](images/user-menu.png)
-
-- Go to the bottom of the page and generate an API key. You should see the API key on the screen:
-
-![API key](images/api-key.png)
-
+- First, ask Benchling support to enable API access on your account, and create API credentials. Instructions: https://help.benchling.com/articles/2353570-access-the-benchling-api-enterprise
 - Install Python 3 and [Pipenv](https://docs.pipenv.org/en/latest/)
 - Install dependencies using `pipenv install`
 - Run `pipenv shell` to work in a virtualenv that includes the dependencies.
