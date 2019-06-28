@@ -8,7 +8,7 @@ This script demonstrates how to upload results in to Benchling from a CSV file. 
 
 # Prerequisites
 
-This script requires the Results application. To define the type of data to upload, you must configure a **result schema** before running the script. In addition, to group the uploaded results together, you need to configure a **run schema**. Here's now:
+This script requires the Results feature of Benchling's Notebook application. To define the type of data to upload, you must configure a **result schema** before running the script. In addition, to group the uploaded results together, you need to configure a **run schema**. Here's now:
 
 - First, [configure the run schema](https://help.benchling.com/results-enterprise/configuration/configure-a-run-schema). You can leave the fields empty (`"fields": []`)
 - The run schema page should have a URL like https://example.benchling.com/your_username/assay-schemas/runs/assaysch_i2sX8NGy. Copy the last part of the URL, e.g. `assaysch_i2sX8NGy`, and write it down as the **run schema ID**. You'll need this to configure the result schema and run the script.
