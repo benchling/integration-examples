@@ -106,9 +106,9 @@ python upload.py --domain example.benchling.com --api-key $YOUR_API_KEY --run-sc
 
 After running the script, the results can be viewed in any Notebook entry.
 
-- Open the Insert menu and select the option for `Result table`
+- Open the Insert menu and select the option for `Run`
 
-![Result table](images/insert-result-table.png)
+![Run](images/insert-run.png)
 
 - Insert an `Example Plate Reader Run`
 
