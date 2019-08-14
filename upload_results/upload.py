@@ -1,3 +1,5 @@
+# This script parses a .csv file of results, and creates corresponding
+# result objects in Benchling.
 import csv
 import json
 import sys
@@ -41,6 +43,8 @@ def api_post(domain, api_key, path, body):
 @click.option("--result-schema-id", help="ID of result schema", required=True)
 def main(domain, api_key, run_schema_id, result_schema_id):
     csv_results = []
+    # "plate_reader_data.csv" is the name of our example .csv file
+    # This can be changed to match the name of the .csv file you are using
     with open("plate_reader_data.csv") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -48,6 +52,8 @@ def main(domain, api_key, run_schema_id, result_schema_id):
 
     for csv_result in csv_results:
         assert set(csv_result.keys()) == set(
+            # The following are the headings of the columns in our example .csv file
+            # This can be changed to match the headings in the .csv file you are using
             [
                 "Sample",
                 "Well",
@@ -76,6 +82,12 @@ def main(domain, api_key, run_schema_id, result_schema_id):
             "assayResults": [
                 {
                     "schemaId": result_schema_id,
+                    # This maps columns in the results .csv file to fields in a Benchling result object
+                    # The following is made for the .csv file and results schema used in our example
+                    # These can be changed to match the fields of the results schema you are using
+                    # The keys on the left must match the field name in Benchling
+                    # The keys on the right (being passed into csv_result) must match the column headings
+                    # in your .csv file
                     "fields": {
                         "run": run_id,
                         "sample": csv_result["Sample"],
