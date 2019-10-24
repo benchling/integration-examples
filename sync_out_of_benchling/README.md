@@ -22,7 +22,7 @@ This script requires the Registry application. In addition, an **entity schema**
 - Run the script. For example:
 
 ```
-python sync_into_benchling.py \
+python sync_out_of_benchling.py \
   --domain example.benchling.com \
   --api-key $YOUR_API_KEY
   --registry-id src_Lmysq16b \
