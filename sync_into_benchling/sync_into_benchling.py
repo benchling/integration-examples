@@ -11,7 +11,7 @@ class BadRequestException(Exception):
 
 
 def api_get(domain, api_key, path):
-    url = "http://{}/api/v2/{}".format(domain, path)
+    url = "https://{}/api/v2/{}".format(domain, path)
     rv = requests.get(url, auth=(api_key, ""))
     if rv.status_code >= 400:
         raise BadRequestException(
@@ -24,7 +24,7 @@ def api_get(domain, api_key, path):
 
 
 def api_post(domain, api_key, path, body):
-    url = "http://{}/api/v2/{}".format(domain, path)
+    url = "https://{}/api/v2/{}".format(domain, path)
     rv = requests.post(url, json=body, auth=(api_key, ""))
     if rv.status_code >= 400:
         raise BadRequestException(
@@ -152,7 +152,7 @@ def main(
         create_antibody_response_json = api_post(
             domain,
             api_key,
-            # https://docs.benchling.com/v2/reference#create-custom-inventory
+            # https://docs.benchling.com/reference#create-custom-entity
             "custom-entities",
             {
                 "name": antibody_json["name"],
@@ -198,15 +198,15 @@ def main(
         registered_antibody_response_json = api_get(
             domain,
             api_key,
-            # https://docs.benchling.com/reference#get-custom-inventory
+            # https://docs.benchling.com/reference#list-custom-entities
             "custom-entities/{}".format(create_antibody_response_json["id"]),
         )
         # As well as the Chain entities
         heavy_chain_json, light_chain_json = api_get(
             domain,
             api_key,
-            # https://docs.benchling.com/reference#bulkget-protein
-            "aa-sequences:bulk-get?aaSequenceIds={},{}".format(
+            # https://docs.benchling.com/reference#list-amino-acid-sequences
+            "aa-sequences?ids={},{}".format(
                 heavy_chain_json["id"], light_chain_json["id"]
             ),
         )["aaSequences"]

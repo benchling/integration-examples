@@ -7,7 +7,7 @@ import requests
 
 
 def api_get(domain, api_key, path, params={}):
-    url = "http://{}/api/v2/{}".format(domain, path)
+    url = "https://{}/api/v2/{}".format(domain, path)
     rv = requests.get(url, auth=(api_key, ""), params=params)
     if rv.status_code >= 400:
         raise Exception(

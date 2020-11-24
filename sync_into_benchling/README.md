@@ -33,7 +33,7 @@ Finally, you need the ID of a folder to import into. You can find or [create](ht
 ```
 python sync_into_benchling.py \
   --domain example.benchling.com \
-  --api-key $YOUR_API_KEY
+  --api-key $YOUR_API_KEY \
   --folder-id lib_9NmU9eFB \
   --registry-id src_Lmysq16b \
   --antibody-schema-id ts_LpAfe6xV \
