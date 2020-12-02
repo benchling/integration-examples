@@ -116,7 +116,11 @@ def find_or_create_chain_in_registry_with_aa_sequence(
 )
 @click.option("--registry-id", help="ID of the Benchling Registry", required=True)
 @click.option("--antibody-schema-id", help="ID of the Antibody schema", required=True)
-@click.option("--chain-schema-id", help="ID of the Chain schema", required=True)
+@click.option(
+    "--chain-schema-id",
+    help="ID of the Chain schema (Must be an AA-Sequence)",
+    required=True,
+)
 @click.argument("json_file_to_import", type=click.File("r"))
 def main(
     domain,
