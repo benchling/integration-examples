@@ -78,26 +78,26 @@ def main(
     folder_id,
     json_file_to_import,
 ):
-    antibodies_json = json.loads(json_file_to_import.read())
-    antibody_jsons = antibodies_json["antibodies"]
+    antibodies_obj = json.loads(json_file_to_import.read())
+    antibody_objs = antibodies_obj["antibodies"]
 
-    # Bulk create heavy chains into registry
+    # Bulk create heavy chains into registry.
     task_resource = api_post(
         domain,
         api_key,
-        # https://docs.benchling.com/reference#create-custom-entity
+        # https://docs.benchling.com/reference#bulk-create-aa-sequences
         "aa-sequences:bulk-create",
         {
             "aaSequences": [
                 {
-                    "aminoAcids": antibody_json["Heavy Chain"],
+                    "aminoAcids": antibody_obj["Heavy Chain"],
                     "folderId": folder_id,
-                    "name": "Heavy Chain for {}".format(antibody_json["name"]),
+                    "name": "Heavy Chain for {}".format(antibody_obj["name"]),
                     "schemaId": chain_schema_id,
                     "registryId": registry_id,
                     "namingStrategy": "NEW_IDS",
                 }
-                for antibody_json in antibody_jsons
+                for antibody_obj in antibody_objs
             ]
         },
     )
@@ -111,26 +111,26 @@ def main(
         )
         return
 
-    bulk_registered_heavy_chain_response_json = task_response[1]["aaSequences"]
+    bulk_registered_heavy_chain_response_obj = task_response[1]["aaSequences"]
     print("Successfully registered heavy chains")
 
-    # Bulk create light chains into registry
+    # Bulk create light chains into registry.
     task_resource = api_post(
         domain,
         api_key,
-        # https://docs.benchling.com/reference#create-custom-entity
+        # https://docs.benchling.com/reference#bulk-create-aa-sequences
         "aa-sequences:bulk-create",
         {
             "aaSequences": [
                 {
-                    "aminoAcids": antibody_json["Light Chain"],
+                    "aminoAcids": antibody_obj["Light Chain"],
                     "folderId": folder_id,
-                    "name": "Light Chain for {}".format(antibody_json["name"]),
+                    "name": "Light Chain for {}".format(antibody_obj["name"]),
                     "schemaId": chain_schema_id,
                     "registryId": registry_id,
                     "namingStrategy": "NEW_IDS",
                 }
-                for antibody_json in antibody_jsons
+                for antibody_obj in antibody_objs
             ]
         },
     )
@@ -145,32 +145,32 @@ def main(
         )
         return
 
-    bulk_registered_light_chain_response_json = task_response[1]["aaSequences"]
+    bulk_registered_light_chain_response_obj = task_response[1]["aaSequences"]
     print("Successfully registered light chains")
 
-    # Bulk create antibodies in registry
+    # Bulk create antibodies in registry.
     task_resource = api_post(
         domain,
         api_key,
-        # https://docs.benchling.com/reference#create-custom-entity
+        # https://docs.benchling.com/reference#bulk-create-custom-entities
         "custom-entities:bulk-create",
         {
             "customEntities": [
                 {
-                    "name": antibody_json["name"],
+                    "name": antibody_obj["name"],
                     "schemaId": antibody_schema_id,
                     "folderId": folder_id,
                     "registryId": registry_id,
                     "namingStrategy": "NEW_IDS",
                     "fields": {
-                        "Heavy Chain": {"value": heavy_chain_json["entityRegistryId"]},
-                        "Light Chain": {"value": light_chain_json["entityRegistryId"]},
+                        "Heavy Chain": {"value": heavy_chain_obj["entityRegistryId"]},
+                        "Light Chain": {"value": light_chain_obj["entityRegistryId"]},
                     },
                 }
-                for antibody_json, heavy_chain_json, light_chain_json in zip(
-                    antibody_jsons,
-                    bulk_registered_heavy_chain_response_json,
-                    bulk_registered_light_chain_response_json,
+                for antibody_obj, heavy_chain_obj, light_chain_obj in zip(
+                    antibody_objs,
+                    bulk_registered_heavy_chain_response_obj,
+                    bulk_registered_light_chain_response_obj,
                 )
             ]
         },
@@ -184,19 +184,19 @@ def main(
             )
         )
         return
-    bulk_registred_antibody_response_json = task_response[1]["customEntities"]
+    bulk_registred_antibody_response_obj = task_response[1]["customEntities"]
 
-    for antibody_json, heavy_chain_json, light_chain_json in zip(
-        bulk_registred_antibody_response_json,
-        bulk_registered_heavy_chain_response_json,
-        bulk_registered_light_chain_response_json,
+    for antibody_obj, heavy_chain_obj, light_chain_obj in zip(
+        bulk_registred_antibody_response_obj,
+        bulk_registered_heavy_chain_response_obj,
+        bulk_registered_light_chain_response_obj,
     ):
 
         print(
             "Registered new Antibody {} with Heavy Chain {} and Light Chain {}".format(
-                antibody_json["entityRegistryId"],
-                heavy_chain_json["entityRegistryId"],
-                light_chain_json["entityRegistryId"],
+                antibody_obj["entityRegistryId"],
+                heavy_chain_obj["entityRegistryId"],
+                light_chain_obj["entityRegistryId"],
             )
         )
 
