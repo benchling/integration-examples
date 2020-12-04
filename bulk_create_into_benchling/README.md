@@ -1,4 +1,4 @@
-This script demonstrates how to use the bulk create and register entity endpoints. The script uses long running tasks and demonstrates how to handle them. In this example, we are importing antibodies defined in a JSON file:
+This script demonstrates how to use the bulk create into registry entity endpoints. The script uses long running tasks and demonstrates how to handle them. In this example, we are importing antibodies defined in a JSON file:
 
 - Each Antibody entity links to a Heavy Chain and a Light Chain entity
 - The Heavy Chain and Light Chain are amino acid (AA) sequences
@@ -31,7 +31,7 @@ Finally, you need the ID of a folder to import into. You can find or [create](ht
 - Run the script. For example (replace the folder/registry/schema IDs with your own):
 
 ```
-python bulk_sync_into_benchling.py \
+python bulk_create_into_benchling.py \
   --domain example.benchling.com \
   --api-key $YOUR_API_KEY \
   --folder-id lib_9NmU9eFB \
