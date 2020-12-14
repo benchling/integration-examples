@@ -22,12 +22,12 @@ This script requires the Registry application. In addition, an **entity schema**
 - Run the script. For example:
 
 ```
-python sync_into_benchling.py \
+python sync_out_of_benchling.py \
   --domain example.benchling.com \
-  --api-key $YOUR_API_KEY
+  --api-key $YOUR_API_KEY \
   --registry-id src_Lmysq16b \
   --antibody-schema-id ts_LpAfe6xV \
-  --last-sync-timestamp 2019-06-27T20:58:17.464834+00:00
+  --last-sync-timestamp 2020-06-27T20:58:17.464834+00:00
 ```
 
 - The script should print a CSV like this:

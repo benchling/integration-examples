@@ -1,0 +1,19 @@
+{
+  "antibodies": [
+    {
+      "name": "AB-BRCA2-0001",
+      "Heavy Chain": "AAAAAAAAAAAAAAAAAAAAAAAA",
+      "Light Chain": "CCCCCCCCCCCCCCCCCCCCCCCC"
+    },
+    {
+      "name": "AB-BRCA2-0002",
+      "Heavy Chain": "DDDDDDDDDDDDDDDDDDDDDDDD",
+      "Light Chain": "EEEEEEEEEEEEEEEEEEEEEEEE"
+    },
+    {
+      "name": "AB-BRCA2-0003",
+      "Heavy Chain": "DDDDDDDDDDDDDDDDDDDDDDDD",
+      "Light Chain": "FFFFFFFFFFFFFFFFFFFFFFFF"
+    }
+  ]
+}

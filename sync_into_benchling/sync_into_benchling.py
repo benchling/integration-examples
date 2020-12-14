@@ -11,7 +11,7 @@ class BadRequestException(Exception):
 
 
 def api_get(domain, api_key, path):
-    url = "http://{}/api/v2/{}".format(domain, path)
+    url = "https://{}/api/v2/{}".format(domain, path)
     rv = requests.get(url, auth=(api_key, ""))
     if rv.status_code >= 400:
         raise BadRequestException(
@@ -24,7 +24,7 @@ def api_get(domain, api_key, path):
 
 
 def api_post(domain, api_key, path, body):
-    url = "http://{}/api/v2/{}".format(domain, path)
+    url = "https://{}/api/v2/{}".format(domain, path)
     rv = requests.post(url, json=body, auth=(api_key, ""))
     if rv.status_code >= 400:
         raise BadRequestException(
@@ -39,8 +39,9 @@ def api_post(domain, api_key, path, body):
 def get_existing_registered_chain_with_aa_sequence(
     domain, api_key, chain_schema_id, aa_sequence
 ):
-    """Get the existing registered Chain with the given AA sequence, if one exists.
-    
+    """
+    Get the existing registered Chain with the given AA sequence, if one exists.
+
     If no registered Chain has the same AA sequence, return None.
     """
     response = api_get(
@@ -68,11 +69,12 @@ def get_existing_registered_chain_with_aa_sequence(
         return None
 
 
-def find_or_create_chain_with_aa_sequence(
+def find_or_create_chain_in_registry_with_aa_sequence(
     domain, api_key, folder_id, registry_id, chain_schema_id, chain_name, aa_sequence
 ):
-    """Find or create a Chain entity with the given amino acid sequence.
-    
+    """
+    Find or create a Chain entity with the given amino acid sequence.
+
     :returns: an AA Sequence Resource (https://docs.benchling.com/reference#protein-resource)
     """
     # The Chain schema has a unique constraint on the AA sequence,
@@ -84,7 +86,7 @@ def find_or_create_chain_with_aa_sequence(
     if existing_registered_chain_json is not None:
         return existing_registered_chain_json
 
-    # No Chain was registered with the same AA sequence, so create a new one.
+    # No Chain was registered with the same AA sequence, so create a new one in the registry.
     chain_json = api_post(
         domain,
         api_key,
@@ -95,6 +97,8 @@ def find_or_create_chain_with_aa_sequence(
             "folderId": folder_id,
             "name": chain_name,
             "schemaId": chain_schema_id,
+            "registryId": registry_id,
+            "namingStrategy": "NEW_IDS",
         },
     )
     return chain_json
@@ -112,7 +116,11 @@ def find_or_create_chain_with_aa_sequence(
 )
 @click.option("--registry-id", help="ID of the Benchling Registry", required=True)
 @click.option("--antibody-schema-id", help="ID of the Antibody schema", required=True)
-@click.option("--chain-schema-id", help="ID of the Chain schema", required=True)
+@click.option(
+    "--chain-schema-id",
+    help="ID of the Chain schema (Must be an AA-Sequence)",
+    required=True,
+)
 @click.argument("json_file_to_import", type=click.File("r"))
 def main(
     domain,
@@ -126,8 +134,8 @@ def main(
     antibodies_json = json.loads(json_file_to_import.read())
 
     for antibody_json in antibodies_json["antibodies"]:
-        # Create Heavy Chain
-        heavy_chain_json = find_or_create_chain_with_aa_sequence(
+        # Create Heavy Chain in registry
+        heavy_chain_json = find_or_create_chain_in_registry_with_aa_sequence(
             domain,
             api_key,
             folder_id,
@@ -137,8 +145,8 @@ def main(
             antibody_json["Heavy Chain"],
         )
 
-        # Create Light Chain
-        light_chain_json = find_or_create_chain_with_aa_sequence(
+        # Create Light Chain in registry
+        light_chain_json = find_or_create_chain_in_registry_with_aa_sequence(
             domain,
             api_key,
             folder_id,
@@ -148,39 +156,23 @@ def main(
             antibody_json["Light Chain"],
         )
 
-        # Create antibody
-        create_antibody_response_json = api_post(
-            domain,
-            api_key,
-            # https://docs.benchling.com/v2/reference#create-custom-inventory
-            "custom-entities",
-            {
-                "name": antibody_json["name"],
-                "schemaId": antibody_schema_id,
-                "folderId": folder_id,
-                "fields": {
-                    "Heavy Chain": {"value": heavy_chain_json["id"]},
-                    "Light Chain": {"value": light_chain_json["id"]},
-                },
-            },
-        )
-
-        # Register
         try:
-            entity_ids_to_register = [create_antibody_response_json["id"]]
-            if heavy_chain_json["entityRegistryId"] is None:
-                entity_ids_to_register.append(heavy_chain_json["id"])
-            if light_chain_json["entityRegistryId"] is None:
-                entity_ids_to_register.append(light_chain_json["id"])
-            api_post(
+            # Create antibody in registry
+            registered_antibody_response_json = api_post(
                 domain,
                 api_key,
-                # https://docs.benchling.com/v2/reference#register-files
-                "registries/{}:register-entities".format(registry_id),
+                # https://docs.benchling.com/reference#create-custom-entity
+                "custom-entities",
                 {
-                    "entityIds": entity_ids_to_register,
-                    # Generate a new Registry ID but also keep the original name
+                    "name": antibody_json["name"],
+                    "schemaId": antibody_schema_id,
+                    "folderId": folder_id,
+                    "registryId": registry_id,
                     "namingStrategy": "NEW_IDS",
+                    "fields": {
+                        "Heavy Chain": {"value": heavy_chain_json["entityRegistryId"]},
+                        "Light Chain": {"value": light_chain_json["entityRegistryId"]},
+                    },
                 },
             )
         except BadRequestException as e:
@@ -194,23 +186,6 @@ def main(
             else:
                 raise e
 
-        # Get the new name of the Antibody entity that we registered
-        registered_antibody_response_json = api_get(
-            domain,
-            api_key,
-            # https://docs.benchling.com/reference#get-custom-inventory
-            "custom-entities/{}".format(create_antibody_response_json["id"]),
-        )
-        # As well as the Chain entities
-        heavy_chain_json, light_chain_json = api_get(
-            domain,
-            api_key,
-            # https://docs.benchling.com/reference#bulkget-protein
-            "aa-sequences:bulk-get?aaSequenceIds={},{}".format(
-                heavy_chain_json["id"], light_chain_json["id"]
-            ),
-        )["aaSequences"]
-
         print(
             "Registered new Antibody {} with Heavy Chain {} and Light Chain {}".format(
                 registered_antibody_response_json["entityRegistryId"],
@@ -222,4 +197,3 @@ def main(
 
 if __name__ == "__main__":
     main()
-
