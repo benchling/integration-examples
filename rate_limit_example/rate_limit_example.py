@@ -14,6 +14,13 @@ class RateLimitExceededException(Exception):
         super(RateLimitExceededException, self).__init__(message)
         self.rv = rv
 
+def delay(b, k):
+    """
+    time.sleep() for b * k seconds.
+    """
+    print("Sleeping %d seconds" % (b * k))
+    time.sleep(b * k)
+
 def api_get(domain, api_key, path):
     url = "https://{}/api/v2/{}".format(domain, path)
     rv = requests.get(url, auth=(api_key, ""))
@@ -35,6 +42,9 @@ def api_get(domain, api_key, path):
     return rv.json()
 
 def api_get_safe(domain, api_key, path):
+    """
+    Rate limit aware API client. Will exponentially backoff on 429.
+    """
     b = 1
     k = 5
     while True:
@@ -56,13 +66,6 @@ def get_dna_sequence(domain, api_key):
             "dna-sequences?pageSize=1"
     )
     return response
-
-def delay(b, k):
-    """
-    time.sleep() for b * k seconds.
-    """
-    print("Sleeping %d seconds" % (b * k))
-    time.sleep(b * k)
 
 @click.command()
 @click.option(
