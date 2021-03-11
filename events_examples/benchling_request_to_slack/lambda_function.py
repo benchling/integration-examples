@@ -8,8 +8,8 @@ import urllib3
 def lambda_handler(event, context):
     http = urllib3.PoolManager()
     assignee_handles = []
-    for assignee_handles in event["detail"]["request"]["assignees"]:
-        assignee_handles.append("@" + str(assignee_handles["user"]["handle"]))
+    for assignee in event["detail"]["request"]["assignees"]:
+        assignee_handles.append("@" + str(assignee["user"]["handle"]))
 
     # Create data payload for Slack POST request
     # see https://api.slack.com/block-kit for more formatting options for the message
