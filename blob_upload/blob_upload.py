@@ -7,6 +7,7 @@ import time
 
 from file_helpers import calculate_md5, encode_base64
 
+CHUNK_SIZE_BYTES = int(10e6)
 
 class BadRequestException(Exception):
     def __init__(self, message, rv):
@@ -14,22 +15,9 @@ class BadRequestException(Exception):
         self.rv = rv
 
 
-def api_get(domain, api_key, path):
-    url = "https://{}/api/v2/{}".format(domain, path)
-    rv = requests.get(url, auth=(api_key, ""), verify=False)
-    if rv.status_code >= 400:
-        raise BadRequestException(
-            "Server returned status {}. Response:\n{}".format(
-                rv.status_code, json.dumps(rv.json())
-            ),
-            rv,
-        )
-    return rv.json()
-
-
 def api_post(domain, api_key, path, body):
     url = "https://{}/api/v2/{}".format(domain, path)
-    rv = requests.post(url, json=body, auth=(api_key, ""), verify=False)
+    rv = requests.post(url, json=body, auth=(api_key, ""))
     if rv.status_code >= 400:
         raise BadRequestException(
             "Server returned status {}. Response:\n{}".format(
@@ -38,20 +26,6 @@ def api_post(domain, api_key, path, body):
             rv,
         )
     return rv.json()
-
-
-def wait_on_blob_upload_status_response(domain, api_key, blob_id):
-    while True:
-        blob_status_response = api_get(domain, api_key, "blobs/{}".format(blob_id))
-        status = blob_status_response["uploadStatus"]
-        if status == "IN_PROGRESS":
-            print("Waiting for blob to complete uploading...")
-            time.sleep(5)
-        else:
-            if status == "ABORTED":
-                return "ABORTED"
-            elif status == "COMPLETE":
-                return "COMPLETE", blob_status_response
 
 
 @click.command()
@@ -72,29 +46,62 @@ def main(
     name = destination_filename
     if name is None:
         name = os.path.basename(filepath)
-
+    file_size = os.path.getsize(filepath)
     with open(filepath, "rb") as file:
-        file_contents = file.read()
-        encoded64 = encode_base64(file_contents)
-        md5 = calculate_md5(file_contents)
-        res = api_post(domain, api_key, "blobs", {
-            "data64": encoded64,
-            "md5": md5,
-            "mimeType": "application/octet-stream",
-            "name": name,
-            "type": "RAW_FILE",
-        })
-        blob_id = res["id"]
-        status = wait_on_blob_upload_status_response(domain, api_key, blob_id)
-        if status[0] == "ABORTED":
-            print("Failed to upload blob.")
+        if file_size <= CHUNK_SIZE_BYTES:
+            upload_single_part_blob(api_key, domain, file, name)
         else:
-            assert (status[0] == "COMPLETE")
-            print("Finished uploading {} with blob ID {}".format(
-                status[1]["name"], status[1]["id"]
-            ))
-        print(res)
+            upload_multi_part_blob(api_key, domain, file, name)
 
+
+def upload_single_part_blob(api_key, domain, file, name):
+    file_contents = file.read()
+    encoded64 = encode_base64(file_contents)
+    md5 = calculate_md5(file_contents)
+    res = api_post(domain, api_key, "blobs", {
+        "data64": encoded64,
+        "md5": md5,
+        "mimeType": "application/octet-stream",
+        "name": name,
+        "type": "RAW_FILE",
+    })
+    assert(res["uploadStatus"] == "COMPLETE")
+    print("Finished uploading {} with blob ID {}".format(
+        res["name"], res["id"]
+    ))
+
+
+def upload_multi_part_blob(api_key, domain, file, name):
+    chunk_producer = lambda chunk_size: file.read(chunk_size)
+    start_blob = api_post(domain, api_key, "blobs:start-multipart-upload", {
+        "mimeType": "application/octet-stream",
+        "name": name,
+        "type": "RAW_FILE",
+    })
+    part_number = 0
+    blob_parts = []
+    try:
+        while True:
+            cursor = chunk_producer(CHUNK_SIZE_BYTES)
+            if not cursor:
+                break
+            part_number += 1
+            encoded64 = encode_base64(cursor)
+            md5 = calculate_md5(cursor)
+            created_part = api_post(domain, api_key, "blobs/{}/parts".format(start_blob["id"]), {
+                "data64": encoded64,
+                "md5": md5,
+                "partNumber": part_number,
+            })
+            blob_parts.append(created_part)
+        api_post(domain, api_key, "blobs/{}:complete-upload".format(start_blob["id"]), {
+            "parts": blob_parts
+        })
+        print("Completed uploading {} parts for blob {}".format(part_number, start_blob["id"]))
+    except Exception as e:
+        print("Error while uploading part {} for blob {}".format(part_number, start_blob["id"]))
+        api_post(domain, api_key, "blobs/{}:abort-upload".format(start_blob["id"]), {})
+        raise e
 
 if __name__ == "__main__":
     main()
